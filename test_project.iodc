@@ -1,0 +1,12 @@
+#import "math.iodh"
+
+def main() {
+    // We can't use the arguments or return value yet,
+    // but we can prove that the compiler understands the call.
+    add(5, 10)
+
+    writeOut("Successfully called a function from another module!\n")
+    flush()
+}
+
+main() # Call the main function to start the program

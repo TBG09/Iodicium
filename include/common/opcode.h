@@ -29,7 +29,7 @@ enum OpCode : uint8_t {
     OP_GET_GLOBAL = 0x0C,    // Gets a global variable. Operand: <uint8_t name_index>
     OP_SET_GLOBAL = 0x0D,    // Sets a global variable. Operand: <uint8_t name_index>
 
-    // Add more opcodes here as the language grows...
+
 };
 
 #endif //IODICIUM_COMMON_OPCODE_H
