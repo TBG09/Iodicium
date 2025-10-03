@@ -1,0 +1,5 @@
+@export
+def sayHello() {
+    writeOut("Hello from the library!\n")
+    flush()
+}

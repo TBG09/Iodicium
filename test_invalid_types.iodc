@@ -1,0 +1,11 @@
+# test_invalid_types.iodc
+
+# Error 1: Type mismatch on initialization
+val x: String = 10.0
+
+# Error 2: Assignment to immutable variable
+val y = "hello"
+y = "world"
+
+# Error 3: Invalid operands for binary operation
+val z = 5 + "five"

@@ -1,0 +1,67 @@
+# ===================================================================
+# Custom Rules for the Iodicium Language Project
+# ===================================================================
+
+# JetBrains IDEs (CLion)
+.idea/
+
+# CMake build directories (matches cmake-build-debug, cmake-build-release, etc.)
+cmake-build-*/
+
+# Iodicium Language Artifacts
+# Ignore compiled executables and libraries produced by the Iodicium compiler
+*.iode
+*.iodl
+
+# Ignore other temporary files
+*.zip
+*.log
+
+
+# ===================================================================
+# Standard C/C++ .gitignore from GitHub
+# (https://github.com/github/gitignore/blob/main/C++.gitignore)
+# ===================================================================
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Linker files
+*.ilk
+
+# Debugger Files
+*.pdb
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+Iodicium
+
+# Debug information files
+*.dwo

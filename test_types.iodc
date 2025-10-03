@@ -1,0 +1,18 @@
+
+# test_types.iodc
+
+# Explicitly typed variable
+val greeting: String = "Hello"
+
+# Type-inferred variable
+val place = "World"
+
+# Test concatenation and printing
+val message = greeting + ", " + place + "!"
+println(message)
+
+# Test numbers
+val num1: Double = 10.5
+val num2 = 5.5
+val result = num1 + num2
+println(result)
