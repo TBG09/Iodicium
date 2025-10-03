@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 #include <fstream>
 #include <sstream>
 #include <cctype> // For std::isdigit, std::toupper
@@ -20,14 +21,17 @@
 #include "executable/iodl_writer.h"
 
 // Internal compiler headers
-#include "codeparser/lexer.h"
-#include "codeparser/parser.h"
-#include "compiler/semantics.h" // New: Semantic Analyzer
-#include "compiler/codegen.h"
+#include "compiler/linker.h"
 #include "vm/vm.h"
 
+// Headers for Exception Types
+#include "codeparser/lexer.h"
+#include "codeparser/parser.h"
+#include "compiler/semantics.h"
+#include "compiler/codegen.h"
+
 // Function declarations
-void compileFile(const std::string& path, const std::string& output_arg, Iodicium::Common::Logger& logger, bool obfuscate_enabled, bool is_library);
+void compileFiles(const std::vector<std::string>& paths, const std::string& output_arg, Iodicium::Common::Logger& logger, bool obfuscate_enabled, bool is_library);
 void runFile(const std::string& path, const std::string& memory, Iodicium::Common::Logger& logger);
 
 // Helper function to parse memory string (e.g., "256M", "1G") into bytes
@@ -77,9 +81,9 @@ int main(int argc, char** argv) {
 
     // --- Compile Command ---
     auto& compile_cmd = parser.add_subparser("compile");
-    compile_cmd.add_description("Compile an Iodicium source file.");
-    compile_cmd.add_argument({"file"}).help("The Iodicium source file to compile.").required(true);
-    compile_cmd.add_argument({"-o", "--output"}).help("Specify the output executable file name.");
+    compile_cmd.add_description("Compile Iodicium source files.");
+    compile_cmd.add_argument({"files"}).help("One or more source files to compile.").required(true).nargs(-1);
+    compile_cmd.add_argument({"-o", "--output"}).help("Specify the output executable file name.").required(true);
     compile_cmd.add_argument({"-ob", "--obfuscate"}).help("Obfuscate variable names in the compiled output.").store_true();
     compile_cmd.add_argument({"--library"}).help("Compile as a library (.iodl).").store_true();
 
@@ -116,7 +120,7 @@ int main(int argc, char** argv) {
             sub_parser_ptr = &parser.get_subparser("compile");
             bool obfuscate_enabled = sub_parser_ptr->get<bool>("-ob");
             bool is_library = sub_parser_ptr->get<bool>("--library");
-            compileFile(sub_parser_ptr->get<std::string>("file"), sub_parser_ptr->get<std::string>("-o"), main_logger, obfuscate_enabled, is_library);
+            compileFiles(sub_parser_ptr->get<std::vector<std::string>>("files"), sub_parser_ptr->get<std::string>("-o"), main_logger, obfuscate_enabled, is_library);
         } else if (parser.is_subcommand_used("run")) {
             sub_parser_ptr = &parser.get_subparser("run");
             runFile(sub_parser_ptr->get<std::string>("file"), sub_parser_ptr->get<std::string>("--memory"), main_logger);
@@ -168,51 +172,29 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-void compileFile(const std::string& path, const std::string& output_arg, Iodicium::Common::Logger& logger, bool obfuscate_enabled, bool is_library) {
-    logger.info("[1/6] Reading source file: " + path);
-    std::ifstream file(path);
-    if (!file.is_open()) throw std::runtime_error("Could not open file: " + path);
-    std::stringstream buffer; buffer << file.rdbuf();
-    std::string source = buffer.str();
+void compileFiles(const std::vector<std::string>& paths, const std::string& output_arg, Iodicium::Common::Logger& logger, bool obfuscate_enabled, bool is_library) {
+    Iodicium::Compiler::Linker linker(logger);
+    Iodicium::Executable::Chunk chunk = linker.link(paths);
 
-    logger.info("[2/6] Tokenizing source code...");
-    Iodicium::Codeparser::Lexer lexer(source, logger);
-    std::vector<Iodicium::Codeparser::Token> tokens = lexer.tokenize();
-
-    logger.info("[3/6] Building Abstract Syntax Tree (AST)...");
-    Iodicium::Codeparser::Parser parser(tokens, logger);
-    std::vector<std::unique_ptr<Iodicium::Codeparser::Stmt>> ast = parser.parse();
-
-    logger.info("[4/6] Performing semantic analysis...");
-    std::string base_path = path.substr(0, path.find_last_of("/"));
-    Iodicium::Compiler::SemanticAnalyzer semantic_analyzer(logger, base_path);
-    semantic_analyzer.analyze(ast);
-
-    logger.info("[5/6] Compiling AST to bytecode...");
-    Iodicium::Compiler::BytecodeCompiler bytecodeCompiler(logger, semantic_analyzer, obfuscate_enabled);
-    Iodicium::Executable::Chunk chunk = bytecodeCompiler.compile(ast);
-
-    std::string out_path = output_arg;
-    if (out_path.empty()) {
-        out_path = path.substr(0, path.rfind('.')) + (is_library ? ".iodl" : ".iode");
-    }
-
-    logger.info("[6/6] Writing output to: " + out_path);
+    logger.info("Writing final output to: " + output_arg);
     if (is_library) {
         Iodicium::Executable::IodlWriter writer(logger);
-        writer.setExports(bytecodeCompiler.getFunctionIPs());
+        // The linker doesn't currently separate exports for libraries.
+        // This is a known limitation to be addressed.
+        // writer.setExports(...);
         writer.setCode(chunk.code);
         for(const auto& constant : chunk.constants) writer.addConstant(constant);
-        writer.writeToFile(out_path);
+        writer.writeToFile(output_arg);
     } else {
         Iodicium::Executable::IoeWriter writer(logger);
-        writer.setImports(chunk.external_references);
+        // The new linker produces a self-contained chunk with no external references.
+        writer.setImports({});
         writer.setCode(chunk.code);
         for(const auto& constant : chunk.constants) writer.addConstant(constant);
-        writer.writeToFile(out_path);
+        writer.writeToFile(output_arg);
     }
 
-    logger.info("Compilation successful. Output written to " + out_path);
+    logger.info("Compilation successful. Output written to " + output_arg);
 }
 
 void runFile(const std::string& path, const std::string& memory, Iodicium::Common::Logger& logger) {
@@ -233,8 +215,7 @@ void runFile(const std::string& path, const std::string& memory, Iodicium::Commo
     Iodicium::Executable::Chunk chunk = reader.readFromFile(path);
 
     Iodicium::VM::VirtualMachine vm(logger, memoryLimitBytes);
-    std::string base_path = path.substr(0, path.find_last_of("/"));
-    vm.run(chunk, base_path);
+    vm.run(chunk);
 
     logger.info("Execution finished.");
 }

@@ -69,6 +69,7 @@ namespace Iodicium {
             void visit(const Codeparser::VarStmt& stmt) override;
             void visit(const Codeparser::ExprStmt& stmt) override;
             void visit(const Codeparser::FunctionStmt& stmt) override;
+            void visit(const Codeparser::FunctionDeclStmt& stmt) override;
             void visit(const Codeparser::ReturnStmt& stmt) override;
 
             // Visitor methods for expressions

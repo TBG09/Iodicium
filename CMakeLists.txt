@@ -26,14 +26,14 @@ set(IODICIUM_SOURCES
     src/compiler/codegen.cpp
     src/compiler/compiler.cpp
     src/compiler/semantics.cpp
+    src/compiler/linker.cpp # New: For static linking
     src/vm/vm.cpp
-    src/vm/library_loader.cpp
     src/vm/value.cpp
     src/common/dialog.cpp
     src/common/logger.cpp
     src/executable/ioe_reader.cpp
     src/executable/ioe_writer.cpp
-    src/executable/iodl_reader.cpp # New: For reading library files
+    src/executable/iodl_reader.cpp
     src/executable/iodl_writer.cpp
 )
 

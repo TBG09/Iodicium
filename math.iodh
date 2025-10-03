@@ -1,0 +1,3 @@
+# This is a header file. It contains only declarations.
+
+@export def add(a: Int, b: Int): Int

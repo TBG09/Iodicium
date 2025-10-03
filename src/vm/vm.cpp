@@ -6,13 +6,10 @@ namespace Iodicium {
     namespace VM {
 
         VirtualMachine::VirtualMachine(Common::Logger& logger, size_t memory_limit) 
-            : m_logger(logger), m_library_loader(logger), m_memory_limit(memory_limit) {}
+            : m_logger(logger), m_memory_limit(memory_limit) {}
 
-        void VirtualMachine::run(Executable::Chunk& main_chunk, const std::string& base_path) {
+        void VirtualMachine::run(Executable::Chunk& main_chunk) {
             m_logger.info("Initializing Iodicium VM...");
-
-            // Prepare all imported libraries and functions before execution begins.
-            m_library_loader.prepare(main_chunk, base_path);
 
             // Set up the first CallFrame for the main script body.
             m_call_stack.clear();
@@ -37,6 +34,14 @@ namespace Iodicium {
                             return; // End of program
                         }
                         break; // Continue execution in the previous frame
+                    }
+                    case OP_CALL: {
+                        uint16_t address = (frame.chunk->code[frame.ip] << 8) | frame.chunk->code[frame.ip + 1];
+                        frame.ip += 2;
+                        m_logger.debug("VM: Executing OP_CALL to address " + std::to_string(address));
+                        CallFrame new_frame = {frame.chunk, address};
+                        m_call_stack.push_back(new_frame);
+                        break;
                     }
                     case OP_CONST: {
                         uint8_t const_index = frame.chunk->code[frame.ip++];
@@ -81,16 +86,6 @@ namespace Iodicium {
                     case OP_SET_GLOBAL: {
                         uint8_t name_index = frame.chunk->code[frame.ip++];
                         m_globals[frame.chunk->constants[name_index]] = m_stack.back(); // Peek, don't pop
-                        break;
-                    }
-                    case OP_EXECUTE_EXTERNAL: {
-                        m_logger.debug("VM: Executing OP_EXECUTE_EXTERNAL.");
-                        uint8_t ordinal = frame.chunk->code[frame.ip++];
-                        const LoadedFunction& func = m_library_loader.getFunction(ordinal);
-                        
-                        // Push a new call frame for the external function
-                        CallFrame new_frame = {&func.library->code_chunk, func.ip};
-                        m_call_stack.push_back(new_frame);
                         break;
                     }
                     default: {

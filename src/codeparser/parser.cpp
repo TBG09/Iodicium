@@ -96,21 +96,27 @@ namespace Iodicium {
             }
             consume(TokenType::RIGHT_PAREN, "Expect ')' after parameters.");
             
-            // Handle nested function export rules
-            bool parent_export_all = m_export_all;
-            m_export_all = false; // Disable @exportall for nested items
+            bool final_exported = is_exported || m_export_all;
 
-            consume(TokenType::LEFT_BRACE, "Expect '{' before function body.");
-            std::vector<std::unique_ptr<Stmt>> body;
-            while (!check(TokenType::RIGHT_BRACE) && !is_at_end()) {
-                body.push_back(parse_statement());
+            // If there is a body, it's a definition. Otherwise, it's a declaration.
+            if (match({TokenType::LEFT_BRACE})) {
+                // Handle nested function export rules
+                bool parent_export_all = m_export_all;
+                m_export_all = false; // Disable @exportall for nested items
+
+                std::vector<std::unique_ptr<Stmt>> body;
+                while (!check(TokenType::RIGHT_BRACE) && !is_at_end()) {
+                    body.push_back(parse_statement());
+                }
+                consume(TokenType::RIGHT_BRACE, "Expect '}' after function body.");
+
+                m_export_all = parent_export_all; // Restore parent's @exportall context
+
+                return std::make_unique<FunctionStmt>(name, parameters, std::move(body), final_exported);
+            } else {
+                // No body, so it's a declaration
+                return std::make_unique<FunctionDeclStmt>(name, parameters, final_exported);
             }
-            consume(TokenType::RIGHT_BRACE, "Expect '}' after function body.");
-
-            m_export_all = parent_export_all; // Restore parent's @exportall context
-
-            bool final_exported = is_exported || parent_export_all;
-            return std::make_unique<FunctionStmt>(name, parameters, std::move(body), final_exported);
         }
 
         std::unique_ptr<Stmt> Parser::parse_return_statement() {
@@ -199,6 +205,7 @@ namespace Iodicium {
                 return std::make_unique<GroupingExpr>(paren_token, std::move(expr));
             }
             error(peek(), "Expect expression.");
+            return nullptr; // Should be unreachable
         }
 
         // --- Helper Methods ---
@@ -222,6 +229,7 @@ namespace Iodicium {
         Token& Parser::consume(TokenType type, const std::string& message) {
             if (check(type)) return advance();
             error(peek(), message);
+            throw std::runtime_error("Unreachable"); // To satisfy compiler
         }
 
         void Parser::error(const Token& token, const std::string& message) {

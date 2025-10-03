@@ -40,6 +40,7 @@ namespace Iodicium {
 
             // Visitor methods
             void visit(const Codeparser::FunctionStmt& stmt) override;
+            void visit(const Codeparser::FunctionDeclStmt& stmt) override;
             void visit(const Codeparser::ReturnStmt& stmt) override;
             void visit(const Codeparser::ExprStmt& stmt) override;
             void visit(const Codeparser::VarStmt& stmt) override;
@@ -54,8 +55,8 @@ namespace Iodicium {
             // Bytecode emission helpers
             void emitByte(uint8_t byte);
             void emitBytes(uint8_t byte1, uint8_t byte2);
+            void emitShort(uint16_t value);
             uint8_t makeConstant(const std::string& value);
-            uint8_t makeExternalReference(const std::string& signature);
 
             // Obfuscation helper
             std::string getObfuscatedName(const std::string& original_name);

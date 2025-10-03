@@ -126,6 +126,7 @@ namespace Iodicium {
         }
 
         void SemanticAnalyzer::visit(const Codeparser::FunctionStmt& stmt) {
+            m_logger.debug("Analyzing FunctionStmt for '" + stmt.name.lexeme + "'.");
             Symbol symbol = {DataType::FUNCTION, false, stmt.is_exported};
             if (!m_symbol_table.define(stmt.name.lexeme, symbol)) {
                 throw SemanticError("Symbol '" + stmt.name.lexeme + "' already declared in this scope.", stmt.name.line, stmt.name.column);
@@ -133,6 +134,15 @@ namespace Iodicium {
             for (const auto& body_stmt : stmt.body) {
                 resolve(body_stmt);
             }
+        }
+
+        void SemanticAnalyzer::visit(const Codeparser::FunctionDeclStmt& stmt) {
+            m_logger.debug("Analyzing FunctionDeclStmt for '" + stmt.name.lexeme + "'.");
+            Symbol symbol = {DataType::FUNCTION, false, stmt.is_exported};
+            if (!m_symbol_table.define(stmt.name.lexeme, symbol)) {
+                throw SemanticError("Symbol '" + stmt.name.lexeme + "' already declared in this scope.", stmt.name.line, stmt.name.column);
+            }
+            // No body to analyze, so the method is complete.
         }
 
         void SemanticAnalyzer::visit(const Codeparser::VarStmt& stmt) {

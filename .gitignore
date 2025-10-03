@@ -17,7 +17,6 @@ cmake-build-*/
 *.zip
 *.log
 
-
 # ===================================================================
 # Standard C/C++ .gitignore from GitHub
 # (https://github.com/github/gitignore/blob/main/C++.gitignore)
