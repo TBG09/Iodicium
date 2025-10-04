@@ -6,7 +6,7 @@
 #include <Windows.h>
 #include <io.h>
 #else
-#include <unistd.h> // For isatty
+#include <unistd.h>
 #endif
 
 namespace Iodicium {
@@ -45,7 +45,6 @@ namespace Iodicium {
             }
             m_colors_enabled = true;
 #else
-            // On Linux/macOS, we check if stdout is a TTY
             m_colors_enabled = (isatty(fileno(stdout)) != 0);
 #endif
         }

@@ -36,11 +36,9 @@ namespace Iodicium {
                 throw IoeWriterError("Failed to open file for writing: " + path);
             }
 
-            // Write the .iode header
             file.write(reinterpret_cast<const char*>(&IOE_MAGIC_NUMBER), sizeof(IOE_MAGIC_NUMBER));
             file.write(reinterpret_cast<const char*>(&IOE_VERSION), sizeof(IOE_VERSION));
 
-            // Write the import section (import table)
             uint32_t import_count = static_cast<uint32_t>(m_import_section.size());
             file.write(reinterpret_cast<const char*>(&import_count), sizeof(import_count));
             for (const auto& import_path : m_import_section) {
@@ -49,7 +47,6 @@ namespace Iodicium {
                 file.write(import_path.data(), path_length);
             }
 
-            // Write the data section (constant pool)
             uint32_t constant_count = static_cast<uint32_t>(m_data_section.size());
             file.write(reinterpret_cast<const char*>(&constant_count), sizeof(constant_count));
             for (const auto& constant : m_data_section) {
@@ -58,7 +55,6 @@ namespace Iodicium {
                 file.write(constant.data(), constant_length);
             }
 
-            // Write the code section (bytecode)
             uint32_t code_size = static_cast<uint32_t>(m_code_section.size());
             file.write(reinterpret_cast<const char*>(&code_size), sizeof(code_size));
             if (!m_code_section.empty()) {

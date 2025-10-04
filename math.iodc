@@ -1,11 +1,7 @@
-# This is an implementation file. It contains function bodies.
 
-# It's good practice for a .iodc file to include its own header
-# to ensure the declarations and definitions match.
-#import "math.iodh"
-
+@export
 def add(a: Int, b: Int): Int {
-    # In the future, this would be `return a + b`
-    # For now, we will just return a constant to test the mechanism.
-    return 42
+    // This function will now access its parameters from the stack,
+    // perform the addition, and return the result.
+    return a + b
 }

@@ -1,0 +1,9 @@
+# Iodicium Project File
+
+name = "TestProject"
+type = "executable"
+
+sources = [
+    "test_project.iodc",
+    "math.iodc",
+]

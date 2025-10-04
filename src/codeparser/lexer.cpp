@@ -15,11 +15,13 @@ namespace Iodicium {
         Lexer::Lexer(std::string source, Common::Logger& logger) : m_source(std::move(source)), m_line_start_index(0), m_logger(logger) {}
 
         std::vector<Token> Lexer::tokenize() {
+            m_logger.debug("--- Starting Tokenization ---");
             while (!is_at_end()) {
                 m_start = m_current;
                 scan_token();
             }
             m_tokens.push_back({TokenType::END_OF_FILE, "", m_line, m_current - m_line_start_index + 1});
+            m_logger.debug("--- Finished Tokenization ---");
             return m_tokens;
         }
 
@@ -47,17 +49,18 @@ namespace Iodicium {
 
         void Lexer::add_token(TokenType type) {
             std::string text = m_source.substr(m_start, m_current - m_start);
+            m_logger.debug("Adding token: Type=" + std::to_string((int)type) + " Lexeme='" + text + "'");
             m_tokens.push_back({type, text, m_line, m_start - m_line_start_index + 1});
         }
 
         void Lexer::add_token(TokenType type, const std::string& literal) {
+            std::string text = m_source.substr(m_start, m_current - m_start);
+            m_logger.debug("Adding token: Type=" + std::to_string((int)type) + " Lexeme='" + text + "' Literal='" + literal + "'");
             m_tokens.push_back({type, literal, m_line, m_start - m_line_start_index + 1});
         }
 
         void Lexer::scan_token() {
             char c = advance();
-            m_logger.debug("Lexer: Starting scan_token for char '" + std::string(1, c) + "' (ASCII: " + std::to_string(static_cast<int>(c)) + ") at line " + std::to_string(m_line) + ", column " + std::to_string(m_current - m_line_start_index));
-
             switch (c) {
                 case '(': add_token(TokenType::LEFT_PAREN); break;
                 case ')': add_token(TokenType::RIGHT_PAREN); break;
@@ -74,14 +77,15 @@ namespace Iodicium {
                     handle_two_char_token('>', TokenType::ARROW, TokenType::MINUS);
                     break;
                 case '/':
-                    if (peek() == '/') {
+                    if (peek() == '/') { 
                         while (peek() != '\n' && !is_at_end()) advance();
                     } else {
                         add_token(TokenType::SLASH);
                     }
                     break;
-                case ' ': case '\r': case '\t': break;
+                case ' ': case '\r': case '\t': case '.': case '\'': case '`': break;
                 case '\n':
+                    add_token(TokenType::NEWLINE);
                     m_line++;
                     m_line_start_index = m_current;
                     break;
@@ -117,9 +121,8 @@ namespace Iodicium {
                         case '\\': value += '\\'; break;
                         case '"': value += '"'; break;
                         default:
-                            // Or throw an error for unsupported escape sequences
-                            value += '\\'; // Just add the backslash
-                            value += previous(); // And the character after it
+                            value += '\\';
+                            value += previous();
                             break;
                     }
                 } else {

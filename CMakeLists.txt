@@ -6,8 +6,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 
-# --- Add cppParse sub-library (it's a separate dependency) ---
+# --- Add sub-libraries ---
 add_subdirectory(cppParse)
+add_subdirectory(cppToml)
 
 
 # --- Define the main executable ---
@@ -24,8 +25,7 @@ set(IODICIUM_SOURCES
     src/codeparser/types/int.cpp
     src/codeparser/types/string.cpp
     src/compiler/codegen.cpp
-    src/compiler/compiler.cpp
-    src/compiler/semantics.cpp
+        src/compiler/semantics.cpp
     src/compiler/linker.cpp # New: For static linking
     src/vm/vm.cpp
     src/vm/value.cpp
@@ -57,6 +57,7 @@ endif()
 
 target_link_libraries(Iodicium PRIVATE
     cppParse
+    cppToml
 )
 
 # On Windows, link the final executable against the Common Controls library

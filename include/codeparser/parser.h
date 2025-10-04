@@ -7,15 +7,16 @@
 #include "codeparser/ast.h"
 #include "common/error.h" // Include the base error class
 #include "common/logger.h" // Include logger header
+#include "common/exceptions.h" // New: For specific parser exceptions
 
 namespace Iodicium {
     namespace Codeparser {
 
-        // Custom exception for parser errors, now inheriting from IodiciumError
-        class ParserError : public Common::IodiciumError {
+        // Custom exception for parser errors, now inheriting from Common::CompilerException
+        class ParserError : public Common::CompilerException {
         public:
             ParserError(const std::string& message, int line, int column)
-                : Common::IodiciumError(message, line, column) {}
+                : Common::CompilerException(message, line, column) {}
         };
 
         class Parser {

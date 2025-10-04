@@ -5,20 +5,19 @@
 #include <sstream>
 #include <cstdlib>
 #include <cstdio>
-#include <iostream> // For console fallback
+#include <iostream>
 
-// Platform-specific implementations
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include <CommCtrl.h> // For Task Dialog
+#include <CommCtrl.h>
 #include <vector>
 
 #pragma comment(lib, "comctl32.lib")
 
 #elif defined(__APPLE__)
 
-// Helper to escape strings for shell commands
+
 std::string escape_for_shell(const std::wstring& s) {
     std::wstringstream escaped;
     for (wchar_t c : s) {
@@ -28,7 +27,7 @@ std::string escape_for_shell(const std::wstring& s) {
             escaped << c;
         }
     }
-    // Convert wstring to string for the command
+
     std::wstring wide_str = escaped.str();
     std::string narrow_str(wide_str.begin(), wide_str.end());
     return narrow_str;
@@ -41,7 +40,7 @@ namespace Iodicium {
 
         int ShowDialog(const DialogOptions& options) {
 #if defined(_WIN32)
-            // --- Windows Modern Task Dialog Implementation ---
+
             TASKDIALOGCONFIG config = { sizeof(config) };
             config.dwFlags = TDF_POSITION_RELATIVE_TO_WINDOW;
             config.pszWindowTitle = options.title.c_str();
@@ -72,7 +71,7 @@ namespace Iodicium {
             return button_pressed;
 
 #elif defined(__APPLE__)
-            // --- macOS Implementation (osascript) ---
+
             std::stringstream script;
             script << "osascript -e 'display dialog \"" << escape_for_shell(options.message) << "\"";
             script << " with title \"" << escape_for_shell(options.title) << "\"";
@@ -104,10 +103,10 @@ namespace Iodicium {
             }
             pclose(pipe);
 
-            // Parse result: "button returned:ButtonText\n"
+
             if (result_str.find("button returned:") != std::string::npos) {
                 std::string button_text = result_str.substr(result_str.find(":") + 1);
-                button_text.pop_back(); // Remove trailing newline
+                button_text.pop_back();
                 
                 for (const auto& btn : options.custom_buttons) {
                     std::string btn_text(btn.text.begin(), btn.text.end());
@@ -116,11 +115,9 @@ namespace Iodicium {
                     }
                 }
             }
-            return 0; // No button or unknown button
+            return 0;
 
 #else
-            // --- Linux/Other (zenity with console fallback) Implementation ---
-            // Check for DISPLAY environment variable to determine if a GUI is likely available
             if (std::getenv("DISPLAY") != nullptr) {
                 std::stringstream command;
                 command << "zenity";
@@ -149,7 +146,7 @@ namespace Iodicium {
                     }
                     pclose(pipe);
                     if (!result_str.empty()) {
-                        result_str.pop_back(); // Remove trailing newline
+                        result_str.pop_back();
                     }
 
                     for (const auto& btn : options.custom_buttons) {
@@ -157,14 +154,12 @@ namespace Iodicium {
                             return btn.id;
                          }
                     }
-                    return 0; // Default if zenity ran but no button matched or was pressed
+                    return 0;
                 } else {
-                    // Fallback to console if popen fails (e.g., zenity not found)
                     std::cerr << "[Dialog] Failed to launch zenity. Falling back to console output.\n";
                 }
             }
 
-            // Console fallback for CLI-only environments or if zenity failed
             std::cerr << "\n--- DIALOG ---\n";
             std::cerr << "Title: " << std::string(options.title.begin(), options.title.end()) << "\n";
             std::cerr << "Message: " << std::string(options.message.begin(), options.message.end()) << "\n";
@@ -177,7 +172,7 @@ namespace Iodicium {
                 std::cerr << "\n";
             }
             std::cerr << "------------\n\n";
-            return 0; // In console fallback, we can't get user input, so return 0 (e.g., OK)
+            return 0;
 #endif
         }
     }

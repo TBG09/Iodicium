@@ -14,6 +14,7 @@ namespace Iodicium {
         struct CallFrame {
             Executable::Chunk* chunk; // The chunk this frame is executing
             size_t ip;                // The instruction pointer for this frame
+            size_t stack_base;        // The base index on the VM stack for this frame's locals
         };
 
         class VirtualMachine {

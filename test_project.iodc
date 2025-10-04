@@ -1,12 +1,9 @@
-#import "math.iodh"
+#import "math.iodc"
 
 def main() {
-    // We can't use the arguments or return value yet,
-    // but we can prove that the compiler understands the call.
-    add(5, 10)
-
-    writeOut("Successfully called a function from another module!\n")
+    val sum: Int = add(5, 10)
+    val sumC: String = convert(sum, String)
+    writeOut("The sum is: " + sumC + "\n")
     flush()
 }
-
-main() # Call the main function to start the program
+main()

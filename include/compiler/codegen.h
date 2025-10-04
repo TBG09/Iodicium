@@ -9,7 +9,7 @@
 #include "common/opcode.h"
 #include "common/logger.h"
 #include "common/error.h"
-#include "compiler/semantics.h" // Include for SymbolTable access
+#include "compiler/semantics.h"
 
 namespace Iodicium {
     namespace Compiler {
@@ -20,23 +20,36 @@ namespace Iodicium {
                 : Common::IodiciumError(message, line, column) {}
         };
 
+        // Represents a local variable in the compiler.
+        struct Local {
+            Codeparser::Token name;
+            int depth;
+        };
+
         class BytecodeCompiler : public Codeparser::StmtVisitor, public Codeparser::ExprVisitor {
         public:
-            // The compiler now takes the results of the semantic analysis
             explicit BytecodeCompiler(Common::Logger& logger, SemanticAnalyzer& analyzer, bool obfuscate_enabled = false);
             Executable::Chunk compile(const std::vector<std::unique_ptr<Codeparser::Stmt>>& statements);
 
-            // Getter for the library loader to find function addresses
             const std::map<std::string, size_t>& getFunctionIPs() const { return m_function_ips; }
 
         private:
             Common::Logger& m_logger;
-            SemanticAnalyzer& m_analyzer; // Reference to the analyzer
+            SemanticAnalyzer& m_analyzer;
             Executable::Chunk m_chunk;
             bool m_obfuscate_enabled;
             std::map<std::string, std::string> m_obfuscation_map;
             int m_obfuscation_counter = 0;
-            std::map<std::string, size_t> m_function_ips; // New: Maps function name to bytecode IP
+            std::map<std::string, size_t> m_function_ips;
+            std::map<std::string, std::vector<size_t>> m_call_fixups;
+            
+            // Scope management
+            std::vector<Local> m_locals;
+            int m_scope_depth = 0;
+
+            void beginScope();
+            void endScope();
+            int resolveLocal(const Codeparser::Token& name);
 
             // Visitor methods
             void visit(const Codeparser::FunctionStmt& stmt) override;
@@ -56,9 +69,9 @@ namespace Iodicium {
             void emitByte(uint8_t byte);
             void emitBytes(uint8_t byte1, uint8_t byte2);
             void emitShort(uint16_t value);
+            void patchShort(size_t offset, uint16_t value);
             uint8_t makeConstant(const std::string& value);
 
-            // Obfuscation helper
             std::string getObfuscatedName(const std::string& original_name);
         };
 
